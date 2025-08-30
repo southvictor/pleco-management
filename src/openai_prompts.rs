@@ -40,10 +40,12 @@ pub async fn generate_openai_prompt(
 ) -> Result<String, Box<dyn std::error::Error>> {
     let api_key = env::var("OPENAI_API_KEY")
         .map_err(|_| "OPENAI_API_KEY environment variable not set")?;
-    
+     
     let base_prompt = match prompt_type {
         "translation" => format!(
-            "Generate a english sentence with the definition of the chinese character '{}'. The purpose of the sentence is for someone to practice translating to easy to understand chinese.",
+            "Generate a english sentence using the translation of the character '{}'.
+            The purpose of the sentence is for someone to practice translating the english sentence into colloquial chinese.
+            Make the sentence at least 10-15 words long.",
             character
         ),
         _ => format!(
@@ -51,7 +53,6 @@ pub async fn generate_openai_prompt(
             character
         ),
     };
-
     let full_prompt = if let Some(ctx) = context {
         format!("{} Context: {}", base_prompt, ctx)
     } else {
