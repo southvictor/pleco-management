@@ -1,9 +1,13 @@
 mod translation;
 mod openai_prompts;
-
+mod import;
+mod db;
 use clap::{Parser, Subcommand};
 
 use crate::translation::generate_translation;
+use crate::import::import_pleco;
+
+const DB_LOCATION: &str = "./data";
 
 #[derive(Parser)]
 #[command(name = "chinese-pratice-tool")]
@@ -19,14 +23,19 @@ enum Commands {
     Translate {
         character: String,
     },
+    ImportPleco {
+        file_location: String,
+    }
 }
 
 #[tokio::main]
 async fn main() {
+    let db = db::load_db(DB_LOCATION);
     let cli = Cli::parse();
     match &cli.command {
         Commands::Greet {} => greet(),
         Commands::Translate { character } => generate_translation(character).await,
+        Commands::ImportPleco { file_location } => import_pleco(file_location)
     }
 }
 
