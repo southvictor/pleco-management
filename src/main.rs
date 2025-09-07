@@ -30,12 +30,13 @@ enum Commands {
 
 #[tokio::main]
 async fn main() {
-    let db = db::load_db(DB_LOCATION);
+    // Fine to panic here
+    let db = db::load_db(DB_LOCATION).unwrap();
     let cli = Cli::parse();
     match &cli.command {
         Commands::Greet {} => greet(),
         Commands::Translate { character } => generate_translation(character).await,
-        Commands::ImportPleco { file_location } => import_pleco(file_location)
+        Commands::ImportPleco { file_location } => import_pleco(file_location).unwrap()
     }
 }
 

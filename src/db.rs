@@ -50,9 +50,15 @@ pub fn load_db(path: &str) -> Result<DB, DBError> {
 }
 
 pub fn save_db(path: &str, contents: &DB) -> Result<(), DBError>{
-    let mut backup_file = fs::OpenOptions::new().write(true).create(true).append(true).open(format!("{}.{}", path, "backup"))?;
+    let temp_path  = format!("{}.{}", path, "temp");
+    let backup_path  = format!("{}.{}", path, "backup");
+    let file_path = path.to_string();
+
+    fs::copy(&file_path, &backup_path)?;
+    let mut temp_file = fs::OpenOptions::new().write(true).create(true).append(true).open(&temp_path)?;
     for (key,value) in contents {
-        backup_file.write(format!("{}={}\n", key, serde_json::to_string(value)?).as_bytes())?;
+        temp_file.write(format!("{}={}\n", key, serde_json::to_string(value)?).as_bytes())?;
     }
+    fs::copy(&temp_path, &file_path)?;
     Ok(())
 }
