@@ -17,3 +17,12 @@ cargo run -- translate 你好
 
 #### Features
 
+
+todo
+import multiple categories X
+get cards for category X
+get cards summary X
+help tool
+include pinyin  in cards when importing X
+generate endpoint that requests translations. X
+generate pleco import format.

@@ -1,1 +1,7 @@
 /target
+/backups
+data
+*.xml
+6.3/
+*.pdf
+.DS_Store

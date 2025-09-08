@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::env;
 use reqwest;
+use crate::db::get_category_cards;
+use crate::db::DB;
+
 
 #[derive(Debug, Serialize, Deserialize)]
 struct OpenAIMessage {
@@ -31,21 +35,46 @@ struct Message {
     content: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct OpenAIResponseV2 {
+    output: Vec<OpenAIOutputV2>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OpenAIOutputV2 {
+    content: Vec<OpenAIContentV2>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OpenAIContentV2 {
+    r#type: String,
+    text: Option<String>,
+}
 
 
 pub async fn generate_openai_prompt(
     character: &str,
     prompt_type: &str,
     context: Option<&str>,
-) -> Result<String, Box<dyn std::error::Error>> {
-    let api_key = env::var("OPENAI_API_KEY")
-        .map_err(|_| "OPENAI_API_KEY environment variable not set")?;
-     
+) -> Result<String, Box<dyn std::error::Error>> {     
     let base_prompt = match prompt_type {
         "translation" => format!(
             "Generate a english sentence using the translation of the character '{}'.
             The purpose of the sentence is for someone to practice translating the english sentence into colloquial chinese.
-            Make the sentence at least 10-15 words long.",
+            Make the sentence at least 20 words long.",
+            character
+        ),
+        "generate-csv" => format!(
+            "Generate a comma separated list of words from the set '{}'.
+            It needs to be usable as a input to code (no extra spaces, one comma between each word)
+            Each newline or comma indicates a new word. Large amount of spaces also indicate a new word. A word will have between 1-4 distinct characters",
+            character
+        ),
+        "generate-csv-png" => format!(
+            "Generate a comma separated list of chinese phrases from this set of phrases. '{}'.
+            It needs to be usable as a input to code (no extra spaces, one comma between each word)
+            The set of phrases is somewhat inconsistently formatted, but generally in the form 607“散步sunZbu where we want to parse 607,散步. 
+            Each phrase will have between 1-4 distinct characters",
             character
         ),
         _ => format!(
@@ -59,8 +88,46 @@ pub async fn generate_openai_prompt(
         base_prompt
     };
 
-    let request = OpenAIRequest {
-        model: "gpt-4.1".to_string(),
+    query_openai(full_prompt).await
+}
+
+pub async fn generate_openai_prompt_category(
+    category: &str,
+    prompt_type: &str,
+    context: Option<&str>,
+    db: &DB,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let category_cards = get_category_cards(db);
+    if !category_cards.contains_key(&category.to_lowercase()) {
+        return Err("Category not found".into());
+    }
+    let character_prompt : String= category_cards.get(category).unwrap().iter().map(|card| {card.character.clone()}).collect::<Vec<_>>().join(",");
+    let base_prompt = match prompt_type {
+        "translation" => format!(
+            "Generate a english sentence for each character using the translation of the characters '{}'.
+            The purpose of each sentence is for someone to practice translating the english sentence into colloquial chinese.
+            Make each sentence around 12 words long.",
+            character_prompt
+        ),
+        _ => format!(
+            "Provide comprehensive information about the Chinese characters '{}' including pronunciation, meaning, usage, and cultural context.",
+            character_prompt
+        ),
+    };
+    let full_prompt = if let Some(ctx) = context {
+        format!("{} Context: {}", base_prompt, ctx)
+    } else {
+        base_prompt
+    };
+
+    query_openai(full_prompt).await
+}
+
+async fn query_openai(prompt: String)  -> Result<String, Box<dyn std::error::Error>> {
+    let api_key = env::var("OPENAI_API_KEY")
+        .map_err(|_| "OPENAI_API_KEY environment variable not set")?;
+    let request: OpenAIRequest = OpenAIRequest {
+        model: "gpt-4o-mini".to_string(),
         messages: vec![
             OpenAIMessage {
                 role: "system".to_string(),
@@ -68,10 +135,10 @@ pub async fn generate_openai_prompt(
             },
             OpenAIMessage {
                 role: "user".to_string(),
-                content: full_prompt,
+                content: prompt,
             },
         ],
-        max_tokens: 500,
+        max_tokens: 750,
         temperature: 0.7,
     };
 
