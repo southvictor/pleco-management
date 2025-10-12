@@ -173,8 +173,7 @@ fn handle_element(bytes_start: &BytesStart, category: &mut String) -> () {
     let name: String = String::from_utf8(bytes_start.name().as_ref().to_vec()).unwrap_or("[invalid utf8]".to_string());
     println!("Element name: {}", name);
     for attribute in bytes_start.attributes() {
-        if attribute.is_ok() {
-            let attribute_result = attribute.unwrap();
+        if let Ok(attribute_result) = attribute {
             let key = str::from_utf8(attribute_result.key.as_ref()).unwrap_or("invalid key");
             let value = attribute_result.unescape_value().unwrap_or_default();
             println!("Attribute key={} value={}", key, value);
@@ -191,7 +190,7 @@ pub async fn import_png(_category: &str, db_location: &str, db: &mut DB) -> Resu
     let directory = select_directory()?;
     let mut ocr_pages: Vec<String> = Vec::new();
     for entry in fs::read_dir(directory)? {
-        let path = entry.unwrap().path();
+        let path = entry?.path();
         if path.extension().map(|e| e == "png").unwrap_or(false) {
             let text = ocr_png(&path)?;
             ocr_pages.push(text);
@@ -227,7 +226,7 @@ pub async fn import_png(_category: &str, db_location: &str, db: &mut DB) -> Resu
 }
 
 fn extract_chinese_runs(input: &str) -> Vec<String> {
-    let re = Regex::new(r"[\p{Han}]+").unwrap();
+    let re = Regex::new(r"[\p{Han}]+").expect("Regex failed to initialize");
     re.find_iter(input)
         .map(|m| m.as_str().to_string())
         .collect()
@@ -236,7 +235,7 @@ fn extract_chinese_runs(input: &str) -> Vec<String> {
 fn ocr_png(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
     // chi_sim = Simplified Chinese; use chi_tra for Traditional
     let mut tess = LepTess::new(None, "chi_sim")?;
-    tess.set_image(path).unwrap();
+    tess.set_image(path)?;
     let text = tess.get_utf8_text()?;
     Ok(text)
 }
