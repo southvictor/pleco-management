@@ -66,13 +66,21 @@ enum Export {
 #[tokio::main]
 async fn main() {
     // Fine to panic here
-    let mut db = db::load_db(DB_LOCATION).unwrap();
+    let mut db = db::load_db(DB_LOCATION).expect("Unable to load db.");
     let cli = Cli::parse();
     match &cli.command {
         Commands::Greet {} => greet(&db),
         Commands::Translate { character } => generate_translation(character).await,
         Commands::Import(import) => match import {
-            Import::Pleco { file_location } => import_pleco(file_location, DB_LOCATION, &mut db).unwrap(),
+            Import::Pleco { file_location } => {
+                let import_result = import_pleco(file_location, DB_LOCATION, &mut db);
+                if let Err(e) = import_result {
+                    println!("Failed to import pleco xml file: {}", e);
+                    println!("Imported pleco xml file successfully.");
+                } else {
+                    println!("Imported pleco xml file successfully.");
+                }
+            },
             Import::PDF {category} => import_png(category, DB_LOCATION, &mut db).await,
             Import::Text { text, category } => import_text(category, text, &mut db, DB_LOCATION).await,
         },
