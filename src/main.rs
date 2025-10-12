@@ -29,17 +29,11 @@ enum Commands {
     Translate {
         character: String,
     },
-    CategoryDescribe {
-        category: String,
-    },
-    TranslateCategory {
-        category: String
-    },
-    ExportPleco {
-        category: String,
-    },
     #[clap(subcommand)]
-    Import(Import)
+    Import(Import),
+
+    #[clap(subcommand)]
+    Export(Export)
 }
 
 #[derive(Subcommand)]
@@ -56,6 +50,19 @@ enum Import {
     },
 }
 
+#[derive(Subcommand)]
+enum Export {
+    Pleco {
+        category: String,
+    },
+    Text {
+        category: String,
+    },
+    Examples {
+        category: String
+    },
+}
+
 #[tokio::main]
 async fn main() {
     // Fine to panic here
@@ -64,13 +71,15 @@ async fn main() {
     match &cli.command {
         Commands::Greet {} => greet(&db),
         Commands::Translate { character } => generate_translation(character).await,
-        Commands::TranslateCategory { category } => generate_translation_category(category, &db).await,
-        Commands::CategoryDescribe { category } => describe_category(category.to_string(), &db),
-        Commands::ExportPleco { category } => export_pleco(category, &db),
         Commands::Import(import) => match import {
             Import::Pleco { file_location } => import_pleco(file_location, DB_LOCATION, &mut db).unwrap(),
             Import::PDF {category} => import_png(category, DB_LOCATION, &mut db).await,
             Import::Text { text, category } => import_text(category, text, &mut db, DB_LOCATION).await,
+        },
+        Commands::Export(export) => match export {
+            Export::Pleco{category}=>export_pleco(category, &db),
+            Export::Text{category}=>describe_category(category.to_string(), &db),
+            Export::Examples { category } => generate_translation_category(category, &db).await,
         }
     }
 }
