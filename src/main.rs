@@ -91,8 +91,8 @@ async fn main() {
             Import::Text { text, category } => import_text(category, text, &mut db, DB_LOCATION).await,
         },
         Commands::Export(export) => match export {
-            Export::Pleco{category}=>export_pleco(category, &db),
-            Export::Text{category}=>describe_category(category.to_string(), &db),
+            Export::Pleco{category}=> export_pleco(category, &db),
+            Export::Text{category}=> describe_category(category.to_string(), &db),
             Export::Examples { category } => generate_translation_category(category, &db).await,
         }
     }
@@ -107,12 +107,13 @@ fn greet(db: &db::DB) {
 
 fn describe_category(category: String, db: &db::DB) {
     let category_count = db::get_category_cards(db);
-    if !category_count.contains_key(&category.to_lowercase()) {
-        println!("Category not found");
-    } else {
-        println!("{}", category_count.get(&category.to_lowercase()).unwrap().len());
-        category_count.get(&category.to_lowercase()).unwrap().iter().enumerate().for_each(|(i, card   )| {
+    let category_result = category_count.get(&category.to_lowercase());
+    if let Some(category_cards) = category_result {
+        println!("{}", category_cards.len());
+        category_cards.iter().enumerate().for_each(|(i, card   )| {
             print!("{} {},", card.character, card.pinyin)
         });
+    } else {
+        println!("Could not find category");
     }
 }
