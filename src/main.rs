@@ -29,13 +29,6 @@ enum Commands {
     Translate {
         character: String,
     },
-    ImportPleco {
-        file_location: String,
-    },
-    ImportText {
-        text: String,
-        category: String,
-    },
     CategoryDescribe {
         category: String,
     },
@@ -45,9 +38,22 @@ enum Commands {
     ExportPleco {
         category: String,
     },
-    ImportPDF {
+    #[clap(subcommand)]
+    Import(Import)
+}
+
+#[derive(Subcommand)]
+enum Import {
+    Pleco {
+        file_location: String,
+    },
+    PDF {
         category: String
-    }
+    },
+    Text {
+        text: String,
+        category: String,
+    },
 }
 
 #[tokio::main]
@@ -59,11 +65,13 @@ async fn main() {
         Commands::Greet {} => greet(&db),
         Commands::Translate { character } => generate_translation(character).await,
         Commands::TranslateCategory { category } => generate_translation_category(category, &db).await,
-        Commands::ImportPleco { file_location } => import_pleco(file_location, DB_LOCATION, &mut db).unwrap(),
         Commands::CategoryDescribe { category } => describe_category(category.to_string(), &db),
         Commands::ExportPleco { category } => export_pleco(category, &db),
-        Commands::ImportText { text, category } => import_text(category, text, &mut db, DB_LOCATION).await,
-        Commands::ImportPDF {category} => import_png(category, DB_LOCATION, &mut db).await
+        Commands::Import(import) => match import {
+            Import::Pleco { file_location } => import_pleco(file_location, DB_LOCATION, &mut db).unwrap(),
+            Import::PDF {category} => import_png(category, DB_LOCATION, &mut db).await,
+            Import::Text { text, category } => import_text(category, text, &mut db, DB_LOCATION).await,
+        }
     }
 }
 

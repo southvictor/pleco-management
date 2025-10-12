@@ -148,7 +148,9 @@ pub async fn import_text(category: &str, text: &str, db: &mut DB, db_location: &
     let response= generate_openai_prompt(text, "generate-csv", None).await;
     match response {
         Ok(response_text) => {
-            response_text.split(',').for_each(|character| {db.insert(character.to_string(),
+            let text_characters = extract_chinese_runs(&response_text);
+            println!("text characters response {:?}", text_characters);
+            text_characters.into_iter().for_each(|character| {db.insert(character.to_string(),
                 Card { character: character.to_string(), category: vec![category.to_string()], pinyin: "".to_string() }
             );});
             match save_db(db_location, &db) {
