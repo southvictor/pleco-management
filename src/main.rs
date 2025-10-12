@@ -76,12 +76,18 @@ async fn main() {
                 let import_result = import_pleco(file_location, DB_LOCATION, &mut db);
                 if let Err(e) = import_result {
                     println!("Failed to import pleco xml file: {}", e);
-                    println!("Imported pleco xml file successfully.");
                 } else {
                     println!("Imported pleco xml file successfully.");
                 }
             },
-            Import::PDF {category} => import_png(category, DB_LOCATION, &mut db).await,
+            Import::PDF {category} => {
+                let import_result = import_png(category, DB_LOCATION, &mut db).await;
+                if let Err(e) = import_result {
+                    println!("Failed to import png file: {}", e);
+                } else {
+                    println!("Imported png file successfully.");
+                }
+            }
             Import::Text { text, category } => import_text(category, text, &mut db, DB_LOCATION).await,
         },
         Commands::Export(export) => match export {

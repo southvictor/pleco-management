@@ -33,6 +33,12 @@ impl From<std::io::Error> for ImportError {
     }
 }
 
+impl From<std::boxed::Box<dyn std::error::Error>> for ImportError {
+    fn from(e: std::boxed::Box<dyn std::error::Error>) -> Self {
+        ImportError(format!("Other error: {}", e.as_ref()))
+    }
+}
+
 impl From<std::str::Utf8Error> for ImportError {
     fn from(e: std::str::Utf8Error) -> Self {
         ImportError(format!("Utf8 error: {}", e))
@@ -181,13 +187,13 @@ fn handle_element(bytes_start: &BytesStart, category: &mut String) -> () {
 
 }
 
-pub async fn import_png(_category: &str, db_location: &str, db: &mut DB) {
-    let directory = select_directory().unwrap();
+pub async fn import_png(_category: &str, db_location: &str, db: &mut DB) -> Result<(), ImportError> {
+    let directory = select_directory()?;
     let mut ocr_pages: Vec<String> = Vec::new();
-    for entry in fs::read_dir(directory).unwrap() {
+    for entry in fs::read_dir(directory)? {
         let path = entry.unwrap().path();
         if path.extension().map(|e| e == "png").unwrap_or(false) {
-            let text = ocr_png(&path).unwrap();
+            let text = ocr_png(&path)?;
             ocr_pages.push(text);
         }
     }
@@ -216,8 +222,8 @@ pub async fn import_png(_category: &str, db_location: &str, db: &mut DB) {
 
     }
 
-    save_db(db_location, &db).unwrap();
-
+    save_db(db_location, &db)?;
+    return Ok(())
 }
 
 fn extract_chinese_runs(input: &str) -> Vec<String> {
