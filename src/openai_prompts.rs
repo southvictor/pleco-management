@@ -101,26 +101,30 @@ pub async fn generate_openai_prompt_category(
     if !category_cards.contains_key(&category.to_lowercase()) {
         return Err("Category not found".into());
     }
-    let character_prompt : String= category_cards.get(category).unwrap().iter().map(|card| {card.character.clone()}).collect::<Vec<_>>().join(",");
-    let base_prompt = match prompt_type {
-        "translation" => format!(
-            "Generate a english sentence for each character using the translation of the characters '{}'.
-            The purpose of each sentence is for someone to practice translating the english sentence into colloquial chinese.
-            Make each sentence around 12 words long.",
-            character_prompt
-        ),
-        _ => format!(
-            "Provide comprehensive information about the Chinese characters '{}' including pronunciation, meaning, usage, and cultural context.",
-            character_prompt
-        ),
-    };
-    let full_prompt = if let Some(ctx) = context {
-        format!("{} Context: {}", base_prompt, ctx)
-    } else {
-        base_prompt
-    };
+    if let Some(cards) = category_cards.get(&category.to_lowercase()) {
+        let character_prompt : String = cards.iter().map(|card| {card.character.clone()}).collect::<Vec<_>>().join(",");
+        let base_prompt = match prompt_type {
+            "translation" => format!(
+                "Generate a english sentence for each character using the translation of the characters '{}'.
+                The purpose of each sentence is for someone to practice translating the english sentence into colloquial chinese.
+                Make each sentence around 12 words long. Limit to 20 sentences.",
+                character_prompt
+            ),
+            _ => format!(
+                "Provide comprehensive information about the Chinese characters '{}' including pronunciation, meaning, usage, and cultural context.",
+                character_prompt
+            ),
+        };
+        let full_prompt = if let Some(ctx) = context {
+            format!("{} Context: {}", base_prompt, ctx)
+        } else {
+            base_prompt
+        };
 
-    query_openai(full_prompt).await
+        query_openai(full_prompt).await
+    } else {
+        Err("Failed to generate translations".into())
+    }
 }
 
 async fn query_openai(prompt: String)  -> Result<String, Box<dyn std::error::Error>> {
