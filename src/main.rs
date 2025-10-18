@@ -6,6 +6,7 @@ mod export;
 
 use clap::{Parser, Subcommand};
 
+use crate::db::save_db;
 use crate::translation::generate_translation;
 use crate::translation::generate_translation_category;
 use crate::import::import_pleco;
@@ -28,6 +29,9 @@ enum Commands {
     Greet {},
     Translate {
         character: String,
+    },
+    Delete {
+        category: String,
     },
     #[clap(subcommand)]
     Import(Import),
@@ -70,6 +74,7 @@ async fn main() {
     let cli = Cli::parse();
     match &cli.command {
         Commands::Greet {} => greet(&db),
+        Commands::Delete { category } => delete(category, &mut db),
         Commands::Translate { character } => generate_translation(character).await,
         Commands::Import(import) => match import {
             Import::Pleco { file_location } => {
@@ -115,5 +120,24 @@ fn describe_category(category: String, db: &db::DB) {
         });
     } else {
         println!("Could not find category");
+    }
+}
+
+fn delete(category: &str, db: &mut db::DB) {
+    let mut cards_to_remove: Vec<String> = Vec::new();
+    for card in db.values() {
+        if card.category.contains(&category.to_string()) {
+            cards_to_remove.push(card.character.clone());
+        }
+    }
+    for character in cards_to_remove {
+        db.remove(&character);
+    }
+
+    let db_saved = save_db(DB_LOCATION, db);
+    if let Ok(_) = db_saved {
+        println!("Category deleted");
+    } else {
+        println!("Failed to delete category")
     }
 }

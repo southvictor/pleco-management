@@ -67,7 +67,7 @@ pub async fn generate_openai_prompt(
         "generate-csv" => format!(
             "Generate a comma separated list of words from the set '{}'.
             It needs to be usable as a input to code (no extra spaces, one comma between each word)
-            Each newline or comma indicates a new word. Large amount of spaces also indicate a new word. A word will have between 1-4 distinct characters",
+            Each newline or comma indicates a new word. A word will have between 2-4 distinct characters",
             character
         ),
         "generate-csv-png" => format!(
