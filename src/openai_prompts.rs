@@ -107,7 +107,7 @@ pub async fn generate_openai_prompt_category(
             "translation" => format!(
                 "Generate a english sentence for each character using the translation of the characters '{}'.
                 The purpose of each sentence is for someone to practice translating the english sentence into colloquial chinese.
-                Make each sentence around 12 words long. Limit to 20 sentences.",
+                Make each sentence around 9 words long. Limit to 20 sentences.",
                 character_prompt
             ),
             _ => format!(
@@ -142,7 +142,7 @@ async fn query_openai(prompt: String)  -> Result<String, Box<dyn std::error::Err
                 content: prompt,
             },
         ],
-        max_tokens: 750,
+        max_tokens: 1500,
         temperature: 0.7,
     };
 
