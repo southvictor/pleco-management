@@ -1,6 +1,6 @@
 ### Chinese Practice Tool
 
-A tool to help you practice Chinese.
+A tool to help you practice Chinese. Integrates with the Pleco app.
 
 #### Usage
 
@@ -17,9 +17,6 @@ cargo run -- translate 你好
 
 Some features require setting OPENAI_API_KEY as an environment variable.
 
-#### Features
-- Importing copy pasted characters into pleco categories
-- Importing characters from pngs into pleco categories (use a model like pdftoppm to turn pdf -> png: pdftoppm -r 300 -png textbook.pdf textbook_png)
-- Importing characters from pleco
-- Exporting to pleco
-- Generating practice sentences to translate based on pleco cateogires.
+#### Updates
+December 28 -> fixing up text -> pleco prompt + adding a new command to generate translations for a single character.
+

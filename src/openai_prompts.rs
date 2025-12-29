@@ -59,15 +59,33 @@ pub async fn generate_openai_prompt(
 ) -> Result<String, Box<dyn std::error::Error>> {     
     let base_prompt = match prompt_type {
         "translation" => format!(
-            "Generate a english sentence using the translation of the character '{}'.
-            The purpose of the sentence is for someone to practice translating the english sentence into colloquial chinese.
-            Make the sentence at least 20 words long.",
+            "Generate ten different examples of english sentences using the translation of the character '{}'.
+            The purpose of each sentence is for someone to practice translating the english sentence into colloquial chinese.
+            Make each sentence around 9 words long. Don't include where the actual characeter should be in the sentence.",
             character
         ),
         "generate-csv" => format!(
-            "Generate a comma separated list of words from the set '{}'.
-            It needs to be usable as a input to code (no extra spaces, one comma between each word)
-            Each newline or comma indicates a new word. A word will have between 2-4 distinct characters",
+            r#"You are a text transformer. Do NOT invent or reorder words.
+
+            Input: a string that contains Chinese words with optional pinyin/Latin letters mixed in.
+            Task:
+            1) Split the input into tokens using any of these as separators: newline, comma, Chinese comma \"，\", the double-comma \"，，\", spaces, semicolons.
+            2) For each token, delete every character that is NOT a CJK Han character (Unicode Han: \p{{Script=Han}}).
+            - This removes pinyin (Latin letters, tone marks), numbers, quotes, brackets, etc.
+            - Keep ALL Han characters, in their original order.
+            3) Drop empty tokens.
+            4) Output exactly one line: the cleaned tokens joined by a single ASCII comma \",\" with no spaces.
+            Rules:
+            - Never output characters that did not appear as Han characters in the input.
+            - Never combine tokens or split a token beyond removing non-Han characters.
+            - Words may be 1-6 Han characters; do not drop 1-character words.
+
+            Example:
+            Input: 放fàng松sōng,,收shōu垃lā圾jī,,收shōu购gòu
+            Output: 放松,收垃圾,收购
+
+            Input: {}
+        "#,
             character
         ),
         "generate-csv-png" => format!(
@@ -107,7 +125,7 @@ pub async fn generate_openai_prompt_category(
             "translation" => format!(
                 "Generate a english sentence for each character using the translation of the characters '{}'.
                 The purpose of each sentence is for someone to practice translating the english sentence into colloquial chinese.
-                Make each sentence around 9 words long. Limit to 20 sentences.",
+                Make each sentence around 9 words long. Limit to 20 sentences. Don't include where the actual characeter should be in the sentence.",
                 character_prompt
             ),
             _ => format!(
