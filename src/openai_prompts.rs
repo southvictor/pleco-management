@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;
+use rand::seq::SliceRandom;
 use reqwest;
 use crate::db::get_category_cards;
 use crate::db::DB;
@@ -120,12 +121,20 @@ pub async fn generate_openai_prompt_category(
         return Err("Category not found".into());
     }
     if let Some(cards) = category_cards.get(&category.to_lowercase()) {
-        let character_prompt : String = cards.iter().map(|card| {card.character.clone()}).collect::<Vec<_>>().join(",");
+        let mut randomized_cards = cards.clone();
+        let mut rng = rand::rng();
+        randomized_cards.shuffle(&mut rng);
+        let character_prompt : String = randomized_cards
+            .iter()
+            .take(20)
+            .map(|card| card.character.clone())
+            .collect::<Vec<_>>()
+            .join(",");
         let base_prompt = match prompt_type {
             "translation" => format!(
                 "Generate a english sentence for each character using the translation of the characters '{}'.
                 The purpose of each sentence is for someone to practice translating the english sentence into colloquial chinese.
-                Make each sentence around 9 words long. Limit to 20 sentences. Don't include where the actual characeter should be in the sentence.",
+                Make each sentence around 9 words long. Limit to 20 sentences. Don't include where the actual characeter should be in the sentence, but include which character to use.",
                 character_prompt
             ),
             _ => format!(
